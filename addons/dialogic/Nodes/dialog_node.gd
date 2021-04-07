@@ -273,18 +273,29 @@ func _process(delta):
 
 
 func _input(event: InputEvent) -> void:
-	if not Engine.is_editor_hint() and event.is_action_pressed(input_next) and not waiting:
-		if tween_node.is_active():
-			# Skip to end if key is pressed during the text animation
-			tween_node.seek(999)
-			finished = true
-		else:
-			if waiting_for_answer == false and waiting_for_input == false:
-				load_dialog()
-		if settings.has_section_key('dialog', 'propagate_input'):
-			var propagate_input: bool = settings.get_value('dialog', 'propagate_input')
-			if not propagate_input:
-				get_tree().set_input_as_handled()
+
+	if event.is_action_pressed(input_next):
+		if text_bubble_hiden:
+			text_bubble_hiden = false
+			waiting = false
+			$TextBubble.visible = true
+		elif auto_play:
+			auto_play = false
+			waiting = false
+			$WaitSeconds.stop()
+		elif not Engine.is_editor_hint() and not waiting:
+			if $TextBubble/Tween.is_active():
+				# Skip to end if key is pressed during the text animation
+				$TextBubble/Tween.seek(999)
+				finished = true
+			else:
+				if waiting_for_answer == false and waiting_for_input == false:
+					load_dialog()
+			if settings.has_section_key('dialog', 'propagate_input'):
+				var propagate_input: bool = settings.get_value('dialog', 'propagate_input')
+				if not propagate_input:
+					get_tree().set_input_as_handled()
+
 
 
 func show_dialog():
@@ -878,6 +889,7 @@ func _compare_definitions(def_value: String, event_value: String, condition: Str
 	return condition_met
 
 
+
 func characters_leave_all():
 	for p in $Portraits.get_children():
 		p.fade_out()
@@ -896,6 +908,56 @@ func close_dialog_event():
 	close_dialog_timer.start(2)
 	characters_leave_all()
 
+
+######								#####
+######			DIALOGIC API		#####
+######								#####
+## 
+##
+## to use you will have to get Dialogic node, if you have it added manually 
+## then use '$' to get it, getting through code can be done like this:
+## var dialogic_scene = Dialogic.start('test')
+##	add_child(dialogic_scene)
+##	var dialogic_node = get_child(0) # add_child() adds child at the top
+
+
+## Makes the timeline load automatically without waiting for input,
+## cancelled if Action Key(@input_next) is pressed
+##
+## @param speed					Amount of time to wait before moving to next event(seconds)
+## @returns 					void
+func dialogic_set_auto_play(speed = 1):
+	auto_play = true
+	auto_play_speed = speed
+
+
+## Cancels auto play
+##
+## @returns 					void
+func dialogic_disable_auto_play():
+	auto_play = false
+	
+
+## Hides text bubble and stop auto play, will show back Action Key(@input_next) is pressed
+## 
+## @returns						void
+func dialogic_hide_text_bubble():
+	$WaitSeconds.stop()
+	$TextBubble.visible = false
+	text_bubble_hiden = true
+	dialogic_disable_auto_play()
+	
+## Changes default theme text speed
+##
+## @returns						void
+func dialogic_set_text_speed(speed:float = 2.0):
+	var theme = DialogicResources.get_settings_config().get_value('theme','default')
+	DialogicResources.set_theme_value(theme, 'text', 'speed', speed)
+	var def_theme = load_theme(theme)
+	# NOTE: risky if you have several themes named as the default theme(why would you do that tho)
+	if current_theme.get_value('settings','name') == def_theme.get_value('settings','name'):
+		current_theme = def_theme
+	
 
 func _on_close_dialog_timeout():
 	on_timeline_end()
