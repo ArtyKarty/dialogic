@@ -290,6 +290,7 @@ func _input(event: InputEvent) -> void:
 			$TextBubble.visible = true
 		elif auto_play:
 			auto_play = false
+			waiting = false
 			$WaitSeconds.stop()
 		elif not Engine.is_editor_hint() and not waiting:
 			if $TextBubble/Tween.is_active():
@@ -876,7 +877,7 @@ func _compare_definitions(def_value: String, event_value: String, condition: Str
 ######								#####
 ######			DIALOGIC API		#####
 ######								#####
-## Functions that can get or change things to dialogic
+## 
 ##
 ## to use you will have to get Dialogic node, if you have it added manually 
 ## then use '$' to get it, getting through code can be done like this:
@@ -911,5 +912,15 @@ func dialogic_hide_text_bubble():
 	text_bubble_hiden = true
 	dialogic_disable_auto_play()
 	
+## Changes default theme text speed
+##
+## @returns						void
+func dialogic_set_text_speed(speed:float = 2.0):
+	var theme = DialogicResources.get_settings_config().get_value('theme','default')
+	DialogicResources.set_theme_value(theme, 'text', 'speed', speed)
+	var def_theme = load_theme(theme)
+	# NOTE: risky if you have several themes named as the default theme(why would you do that tho)
+	if current_theme.get_value('settings','name') == def_theme.get_value('settings','name'):
+		current_theme = def_theme
 	
 
