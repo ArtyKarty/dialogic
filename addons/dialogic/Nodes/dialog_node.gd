@@ -447,7 +447,7 @@ func event_handler(event: Dictionary):
 					go_to_next_event()
 				else:
 					var character_data = get_character(event['character'])
-					var exists = grab_portrait_focus(character_data)
+					var exists = grab_portrait_focus(character_data, event)
 					if exists == false:
 						var p = Portrait.instance()
 						var char_portrait = event['portrait']
@@ -683,7 +683,7 @@ func grab_portrait_focus(character_data, event: Dictionary = {}) -> bool:
 	for portrait in $Portraits.get_children():
 		if portrait.character_data == character_data:
 			exists = true
-			
+	
 			if visually_focus:
 				portrait.focus()
 			if event.has('portrait'):
